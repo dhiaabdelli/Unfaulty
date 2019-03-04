@@ -7,7 +7,7 @@
 #include "/usr/include/SDL/SDL_ttf.h"
 #include "menu.h"
 
-void initGame(SDL_Surface* *screen, Button *button, Background *menu, Background *menutop, Background *menuExit, Mix_Music* *MenuMusic , Mix_Chunk* *soundButtonHover, Mix_Chunk* *SoundButtonClick, Background *menuSingleplayer){
+void initGame(SDL_Surface* *screen, Text *title, Sprite *smoke, Sprite *dust, Button *button, Background *menu, Background *menutop, Background *menuExit, Mix_Music* *MenuMusic , Mix_Chunk* *soundButtonHover, Mix_Chunk* *SoundButtonClick, Background *menuSingleplayer){
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		printf("Unable to initialize SDL: %s\n", SDL_GetError());
 		exit(EXIT_FAILURE);
@@ -23,6 +23,7 @@ void initGame(SDL_Surface* *screen, Button *button, Background *menu, Background
 		printf("Unable to set video mode: %s\n", SDL_GetError());
 		exit(EXIT_FAILURE);
 	}
+
 	menu->src = IMG_Load("materials/menu/background.png");
 	if(menu->src == NULL){
 		printf("Unable to load Menu background: %s\n", SDL_GetError());
@@ -30,6 +31,45 @@ void initGame(SDL_Surface* *screen, Button *button, Background *menu, Background
 	}
 	menu->pos.x = 0;
 	menu->pos.y = 0;
+
+	title->font = TTF_OpenFont( "materials/fonts/CaviarDreams_Bold.ttf", 15);
+	if(title->font == NULL){
+		printf("Unable to load font : %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
+	//title->textColor = { 0, 0, 0 };
+	title->textColor.r = 255;
+  	title->textColor.g = 255;
+  	title->textColor.b = 255;
+	title->message = TTF_RenderText_Solid( title->font, "Copyright(C) Blindspot 2019 All Rights Reserved", title->textColor);
+	title->pos.x = menu->src->w -  title->message->w;
+	title->pos.y = menu->src->h - 20;
+
+	smoke->src = IMG_Load("materials/sprites/menu/smokeSpritesheet.png");
+	if(smoke->src == NULL){
+		printf("Unable to load smoke sprites: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
+	smoke->pos.x = 290;
+	smoke->pos.y = 115;
+
+	smoke->posprite.x = 0;
+	smoke->posprite.y = 0;
+	smoke->posprite.h = smoke->src->h;
+	smoke->posprite.w = 70;
+
+	dust->src = IMG_Load("materials/sprites/menu/dustParticles.png");
+	if(dust->src == NULL){
+		printf("Unable to load smoke sprites: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
+	dust->pos.x = 484;
+	dust->pos.y = 250;
+
+	dust->posprite.x = 0;
+	dust->posprite.y = 0;
+	dust->posprite.h = smoke->src->h;
+	dust->posprite.w = 398;
 	/*menuSingleplayer->src = IMG_Load("materials/menu/menuPlay.png");
 	if(menuSingleplayer->src == NULL){
 		printf("Unable to load Singleplayer Menu File: %s\n", SDL_GetError());
@@ -105,7 +145,15 @@ void initButton(Button *button, int x, int y, char* regular, char* hover){
 	button->pos.x = x;
 	button->pos.y = y;
 	button->regular = IMG_Load(regular);
+	if(button->regular == NULL){
+		printf("Unable to load button regular: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
 	button->hover = IMG_Load(hover);
+	if(button->hover == NULL){
+		printf("Unable to load button hover: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
 	button->pos.h = button->regular->h;
 	button->pos.w = button->regular->w;
 	button->soundPlayedHover = 0;
@@ -141,8 +189,8 @@ void kbMenu(int a, int b, int* k){
 	}
 }
 
-int mainMenu(SDL_Surface* screen, Background menu, Background menutop, Button* button, Mix_Chunk* SoundButtonHover, Mix_Chunk* SoundButtonClick, int *poskeys){
-	int x, y, i, choix = -1;
+int mainMenu(SDL_Surface* screen, Text title, Sprite smoke, Sprite dust, Background menu, Background menutop, Button* button, Mix_Chunk* SoundButtonHover, Mix_Chunk* SoundButtonClick, int *poskeys){
+	int x, y, i, choix = -1, k = 0;
 	SDL_Event event;
 	Uint8 p;
 	Uint8* keys;
@@ -151,6 +199,21 @@ int mainMenu(SDL_Surface* screen, Background menu, Background menutop, Button* b
 		SDL_PollEvent(&event);
 		SDL_BlitSurface(menu.src, NULL, screen, &menu.pos);
 		SDL_BlitSurface(menutop.src, NULL, screen, &menutop.pos);
+		SDL_BlitSurface(dust.src, &dust.posprite, screen, &dust.pos);
+		SDL_BlitSurface(smoke.src, &smoke.posprite, screen, &smoke.pos);
+		SDL_BlitSurface(title.message, NULL, screen, &title.pos);
+		if(k == 4){
+			k = 0;
+			if(smoke.posprite.x <= 60*5){
+				smoke.posprite.x += 70;
+				dust.posprite.x += 398;
+			}else{
+				smoke.posprite.x = 0;
+				dust.posprite.x = 0;
+			}
+		}else{
+			k++;
+		}
 		p = SDL_GetMouseState(&x, &y);
 		for(i = 0; i < 4; i++){
 			if(hover(button[i].pos, x, y)){
@@ -179,6 +242,21 @@ int mainMenu(SDL_Surface* screen, Background menu, Background menutop, Button* b
 		}
 		SDL_BlitSurface(menu.src, NULL, screen, &menu.pos);
 		SDL_BlitSurface(menutop.src, NULL, screen, &menutop.pos);
+		SDL_BlitSurface(dust.src, &dust.posprite, screen, &dust.pos);
+		SDL_BlitSurface(smoke.src, &smoke.posprite, screen, &smoke.pos);
+		SDL_BlitSurface(title.message, NULL, screen, &title.pos);
+		if(k == 4){
+			k = 0;
+			if(smoke.posprite.x <= 60*5){
+				smoke.posprite.x += 70;
+				dust.posprite.x += 398;
+			}else{
+				smoke.posprite.x = 0;
+				dust.posprite.x = 0;
+			}
+		}else{
+			k++;
+		}
 		keys=SDL_GetKeyState(NULL);
 		kbMenu(SDLK_DOWN, SDLK_UP, poskeys);
 		for(i = 0; i < 4 && choix == -1; i++){
@@ -216,7 +294,7 @@ int mainMenu(SDL_Surface* screen, Background menu, Background menutop, Button* b
 	return choix;
 }
 
-int subMenu(SDL_Surface* screen, Background menu, Button* button, Mix_Chunk* SoundButtonHover, Mix_Chunk* SoundButtonClick, Background subMenu, Background menutop, int j, int j2){
+int subMenu(SDL_Surface* screen, Text title, Sprite smoke, Sprite dust, Background menu, Button* button, Mix_Chunk* SoundButtonHover, Mix_Chunk* SoundButtonClick, Background subMenu, Background menutop, int j, int j2){
 	int x, y, i, choix = -1;
 	SDL_Event event;
 	Background greySurface;
